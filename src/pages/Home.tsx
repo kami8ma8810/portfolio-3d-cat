@@ -1,26 +1,34 @@
-import { lazy, Suspense } from 'react'
-import { Link } from '@tanstack/react-router'
+import { lazy, Suspense, useEffect } from 'react'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useReducedMotion } from '../hooks/useReducedMotion'
+import { detectWebGLSupport, detectLowPerformance } from '../lib/device'
+import { useUIStore } from '../stores/uiStore'
+import { ModeToggle } from '../components/ui/ModeToggle'
 
 const Plaza = lazy(() => import('../components/scene/Plaza').then(m => ({ default: m.Plaza })))
 
 export function Home() {
+  const navigate = useNavigate()
   const prefersReducedMotion = useReducedMotion()
+  const forceLiteMode = useUIStore((state) => state.forceLiteMode)
   
-  // WebGL対応チェック
-  const isWebGLSupported = (() => {
-    try {
-      const canvas = document.createElement('canvas')
-      return !!(
-        window.WebGLRenderingContext &&
-        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
-      )
-    } catch {
-      return false
+  const isWebGLSupported = detectWebGLSupport()
+  const isLowPerf = detectLowPerformance()
+  
+  // 自動的にライトモードへリダイレクト
+  useEffect(() => {
+    if (!isWebGLSupported || (isLowPerf && !forceLiteMode)) {
+      navigate({ to: '/lite' })
     }
-  })()
+  }, [isWebGLSupported, isLowPerf, forceLiteMode, navigate])
   
-  if (!isWebGLSupported || prefersReducedMotion) {
+  // 強制ライトモードまたはreduced-motion設定時
+  if (forceLiteMode || prefersReducedMotion) {
+    navigate({ to: '/lite' })
+    return null
+  }
+  
+  if (!isWebGLSupported) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <main id="main-content" className="text-center">
@@ -28,11 +36,7 @@ export function Home() {
           <p className="text-xl mb-8">3D猫が案内するインタラクティブなポートフォリオ</p>
           
           <div className="bg-primary-yellow text-primary-black p-8 rounded-lg mb-8 max-w-md">
-            <p className="mb-4">
-              {!isWebGLSupported 
-                ? '⚠️ お使いのブラウザはWebGLに対応していません'
-                : '⚠️ 視覚効果を減らす設定が有効です'}
-            </p>
+            <p className="mb-4">⚠️ お使いのブラウザはWebGLに対応していません</p>
             <p>ライトモードをご利用ください</p>
           </div>
 
@@ -50,17 +54,20 @@ export function Home() {
   }
   
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow mx-auto mb-4"></div>
-            <p>3Dシーンを読み込み中...</p>
+    <>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-yellow mx-auto mb-4"></div>
+              <p>3Dシーンを読み込み中...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <Plaza />
-    </Suspense>
+        }
+      >
+        <Plaza />
+      </Suspense>
+      <ModeToggle currentMode="3d" />
+    </>
   )
 }
