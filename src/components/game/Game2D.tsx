@@ -275,8 +275,127 @@ export function Game2D() {
                 tailBase.y - 15
               )
               ctx.stroke()
+            } else if (isJumping) {
+              // ジャンプ中専用ポーズ
+              // 体（伸びた姿勢）
+              ctx.fillStyle = '#1a1a1a'
+              ctx.save()
+              ctx.translate(obj.x + obj.width / 2, obj.y + obj.height / 2)
+              
+              // ジャンプ方向に体を傾ける
+              const jumpRotation = gameState.playerState.facingRight ? 0.2 : -0.2
+              const verticalStretch = 1.2 // 体を縦に伸ばす
+              
+              ctx.rotate(jumpRotation)
+              
+              // 体（縦に伸びた楕円）
+              ctx.beginPath()
+              ctx.ellipse(0, 0, obj.width / 2 - 5, obj.height / 2 * verticalStretch, 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // 頭（上部に配置）
+              ctx.beginPath()
+              ctx.arc(
+                gameState.playerState.facingRight ? 8 : -8,
+                -obj.height / 2 * verticalStretch + 5,
+                10,
+                0, Math.PI * 2
+              )
+              ctx.fill()
+              
+              // 耳（ピンと立てる）
+              const earDir = gameState.playerState.facingRight ? 1 : -1
+              ctx.beginPath()
+              ctx.moveTo(-5 * earDir, -obj.height / 2 * verticalStretch)
+              ctx.lineTo(-8 * earDir, -obj.height / 2 * verticalStretch - 12)
+              ctx.lineTo(-2 * earDir, -obj.height / 2 * verticalStretch - 3)
+              ctx.closePath()
+              ctx.fill()
+              
+              ctx.beginPath()
+              ctx.moveTo(5 * earDir, -obj.height / 2 * verticalStretch)
+              ctx.lineTo(8 * earDir, -obj.height / 2 * verticalStretch - 12)
+              ctx.lineTo(2 * earDir, -obj.height / 2 * verticalStretch - 3)
+              ctx.closePath()
+              ctx.fill()
+              
+              // 目（集中した表情）
+              ctx.fillStyle = '#00ff00'
+              ctx.shadowBlur = 4
+              ctx.shadowColor = '#00ff00'
+              
+              const eyeY = -obj.height / 2 * verticalStretch + 5
+              if (gameState.playerState.facingRight) {
+                ctx.beginPath()
+                ctx.arc(12, eyeY, 2, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(6, eyeY, 2, 0, Math.PI * 2)
+                ctx.fill()
+              } else {
+                ctx.beginPath()
+                ctx.arc(-12, eyeY, 2, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(-6, eyeY, 2, 0, Math.PI * 2)
+                ctx.fill()
+              }
+              
+              ctx.shadowBlur = 0
+              ctx.restore()
+              
+              // 足（伸ばした状態）
+              ctx.strokeStyle = '#1a1a1a'
+              ctx.lineWidth = 5
+              ctx.lineCap = 'round'
+              
+              // 前足（前に伸ばす）
+              ctx.beginPath()
+              ctx.moveTo(obj.x + obj.width / 2 - 5, obj.y + obj.height / 2)
+              ctx.lineTo(
+                obj.x + obj.width / 2 - 5 + (gameState.playerState.facingRight ? 10 : -10),
+                obj.y + obj.height / 2 - 10
+              )
+              ctx.stroke()
+              
+              ctx.beginPath()
+              ctx.moveTo(obj.x + obj.width / 2 + 5, obj.y + obj.height / 2)
+              ctx.lineTo(
+                obj.x + obj.width / 2 + 5 + (gameState.playerState.facingRight ? 10 : -10),
+                obj.y + obj.height / 2 - 10
+              )
+              ctx.stroke()
+              
+              // 後ろ足（後ろに伸ばす）
+              ctx.beginPath()
+              ctx.moveTo(obj.x + obj.width / 2 - 5, obj.y + obj.height / 2 + 5)
+              ctx.lineTo(
+                obj.x + obj.width / 2 - 5 + (gameState.playerState.facingRight ? -10 : 10),
+                obj.y + obj.height / 2 + 15
+              )
+              ctx.stroke()
+              
+              ctx.beginPath()
+              ctx.moveTo(obj.x + obj.width / 2 + 5, obj.y + obj.height / 2 + 5)
+              ctx.lineTo(
+                obj.x + obj.width / 2 + 5 + (gameState.playerState.facingRight ? -10 : 10),
+                obj.y + obj.height / 2 + 15
+              )
+              ctx.stroke()
+              
+              // しっぽ（ピンと伸ばす）
+              ctx.beginPath()
+              ctx.moveTo(
+                obj.x + obj.width / 2 + (gameState.playerState.facingRight ? -10 : 10),
+                obj.y + obj.height / 2
+              )
+              ctx.lineTo(
+                obj.x + obj.width / 2 + (gameState.playerState.facingRight ? -30 : 30),
+                obj.y + obj.height / 2 - 20
+              )
+              ctx.stroke()
             } else {
-              // 静止中またはジャンプ中（元のデザイン）
+              // 静止中（座っている姿勢）
               // 体（楕円形）
               ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
@@ -344,7 +463,7 @@ export function Game2D() {
               
               ctx.shadowBlur = 0
               
-              // しっぽ（動きに応じて変化）
+              // しっぽ（垂れ下がる）
               ctx.strokeStyle = '#1a1a1a'
               ctx.lineWidth = 6
               ctx.lineCap = 'round'
@@ -355,25 +474,13 @@ export function Game2D() {
                 y: obj.y + obj.height - 10
               }
               
-              if (isJumping) {
-                // ジャンプ中は上向き
-                ctx.moveTo(tailBase.x, tailBase.y)
-                ctx.quadraticCurveTo(
-                  tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
-                  tailBase.y - 10,
-                  tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
-                  tailBase.y - 20
-                )
-              } else {
-                // 静止中は垂れ下がる
-                ctx.moveTo(tailBase.x, tailBase.y)
-                ctx.quadraticCurveTo(
-                  tailBase.x + (gameState.playerState.facingRight ? -10 : 10),
-                  tailBase.y + 10,
-                  tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
-                  tailBase.y + 5
-                )
-              }
+              ctx.moveTo(tailBase.x, tailBase.y)
+              ctx.quadraticCurveTo(
+                tailBase.x + (gameState.playerState.facingRight ? -10 : 10),
+                tailBase.y + 10,
+                tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
+                tailBase.y + 5
+              )
               
               ctx.stroke()
               
