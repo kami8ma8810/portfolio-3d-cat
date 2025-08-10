@@ -29,6 +29,9 @@ export function Game2D() {
         velocityX: 0,
         velocityY: 0,
         type: 'player',
+        friction: 0.85,
+        bounce: 0,
+        mass: 1,
       },
       // 地面
       {
@@ -135,19 +138,34 @@ export function Game2D() {
       ctx.save()
       ctx.translate(-gameState.camera.x, -gameState.camera.y)
       
-      // 背景の雲
+      // 背景の雲（パララックス効果）
+      const parallaxFactor = 0.3
       ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      
+      // 雲1
+      ctx.save()
+      ctx.translate(gameState.camera.x * parallaxFactor, 0)
       ctx.beginPath()
       ctx.arc(200, 100, 30, 0, Math.PI * 2)
       ctx.arc(230, 100, 35, 0, Math.PI * 2)
       ctx.arc(260, 100, 30, 0, Math.PI * 2)
       ctx.fill()
       
+      // 雲2
       ctx.beginPath()
       ctx.arc(500, 80, 25, 0, Math.PI * 2)
       ctx.arc(525, 80, 30, 0, Math.PI * 2)
       ctx.arc(550, 80, 25, 0, Math.PI * 2)
       ctx.fill()
+      
+      // 雲3
+      ctx.beginPath()
+      ctx.arc(800, 120, 28, 0, Math.PI * 2)
+      ctx.arc(828, 120, 32, 0, Math.PI * 2)
+      ctx.arc(856, 120, 28, 0, Math.PI * 2)
+      ctx.fill()
+      
+      ctx.restore()
       
       // オブジェクト描画
       gameState.objects.forEach(obj => {
@@ -157,9 +175,19 @@ export function Game2D() {
             const isJumping = !gameState.playerState.isGrounded
             const walkCycle = Date.now() * 0.01
             
+            // スクワッシュ効果の適用
+            const squash = gameState.playerState.landingSquash || 0
+            const scaleY = 1 - squash
+            const scaleX = 1 + squash * 0.5
+            
             if (isMoving && !isJumping) {
               // 歩行中（4本足）
               const walkOffset = Math.sin(walkCycle) * 2
+              
+              ctx.save()
+              ctx.translate(obj.x + obj.width / 2, obj.y + obj.height)
+              ctx.scale(scaleX, scaleY)
+              ctx.translate(-(obj.x + obj.width / 2), -(obj.y + obj.height))
               
               // 体（水平姿勢）
               ctx.fillStyle = '#1a1a1a'
@@ -275,6 +303,8 @@ export function Game2D() {
                 tailBase.y - 15
               )
               ctx.stroke()
+              
+              ctx.restore()
             } else if (isJumping) {
               // ジャンプ中専用ポーズ
               // 体（伸びた姿勢）
@@ -396,6 +426,11 @@ export function Game2D() {
               ctx.stroke()
             } else {
               // 静止中（座っている姿勢）
+              ctx.save()
+              ctx.translate(obj.x + obj.width / 2, obj.y + obj.height)
+              ctx.scale(scaleX, scaleY)
+              ctx.translate(-(obj.x + obj.width / 2), -(obj.y + obj.height))
+              
               // 体（楕円形）
               ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
@@ -503,6 +538,8 @@ export function Game2D() {
               ctx.beginPath()
               ctx.ellipse(obj.x + 33, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
               ctx.fill()
+              
+              ctx.restore()
             }
             break
             
@@ -654,6 +691,23 @@ export function Game2D() {
             break
         }
       })
+      
+      // パーティクル描画
+      if (gameState.particles) {
+        gameState.particles.forEach(particle => {
+          ctx.save()
+          ctx.globalAlpha = particle.life / 20
+          
+          if (particle.type === 'dust') {
+            ctx.fillStyle = '#d2691e'
+            ctx.beginPath()
+            ctx.arc(particle.x, particle.y, 2 + Math.random() * 2, 0, Math.PI * 2)
+            ctx.fill()
+          }
+          
+          ctx.restore()
+        })
+      }
       
       ctx.restore()
       

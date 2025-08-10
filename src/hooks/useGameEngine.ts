@@ -25,13 +25,29 @@ export interface GameObject {
 
 export interface GameState {
   objects: GameObject[]
-  camera: { x: number; y: number }
+  camera: { 
+    x: number
+    y: number
+    targetX?: number
+    targetY?: number
+    deadZoneX?: number
+    deadZoneY?: number
+  }
   playerState: {
     isJumping: boolean
     isGrounded: boolean
     facingRight: boolean
     canDoubleJump: boolean
+    landingSquash?: number // 着地時のスクワッシュ効果
   }
+  particles?: Array<{
+    x: number
+    y: number
+    vx: number
+    vy: number
+    life: number
+    type: string
+  }>
 }
 
 interface UseGameEngineProps {
@@ -58,13 +74,22 @@ export function useGameEngine({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [gameState, setGameState] = useState<GameState>({
     objects: [],
-    camera: { x: 0, y: 0 },
+    camera: { 
+      x: 0, 
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+      deadZoneX: 100, // 中央からの許容範囲
+      deadZoneY: 50
+    },
     playerState: {
       isJumping: false,
       isGrounded: true,
       facingRight: true,
       canDoubleJump: true,
+      landingSquash: 0,
     },
+    particles: [],
   })
   
   const keysPressed = useRef<{ [key: string]: boolean }>({})
@@ -197,15 +222,84 @@ export function useGameEngine({
             }
           })
           
+          // 着地検出と効果
+          const wasInAir = !newState.playerState.isGrounded
           newState.playerState.isGrounded = grounded
+          
           if (grounded) {
             newState.playerState.canDoubleJump = true
             newState.playerState.isJumping = false
+            
+            // 着地時の効果
+            if (wasInAir && player.velocityY > 5) {
+              // スクワッシュ効果
+              newState.playerState.landingSquash = 0.3
+              
+              // パーティクル生成
+              const particleCount = Math.min(Math.floor(player.velocityY / 3), 8)
+              for (let i = 0; i < particleCount; i++) {
+                newState.particles!.push({
+                  x: player.x + player.width / 2 + (Math.random() - 0.5) * 20,
+                  y: player.y + player.height,
+                  vx: (Math.random() - 0.5) * 5,
+                  vy: -Math.random() * 3 - 1,
+                  life: 20,
+                  type: 'dust'
+                })
+              }
+            }
           }
           
-          // カメラ追従
-          newState.camera.x = player.x - width / 2
-          newState.camera.y = player.y - height / 2
+          // スクワッシュ効果の減衰
+          if (newState.playerState.landingSquash && newState.playerState.landingSquash > 0) {
+            newState.playerState.landingSquash *= 0.8
+            if (newState.playerState.landingSquash < 0.05) {
+              newState.playerState.landingSquash = 0
+            }
+          }
+          
+          // パーティクルの更新
+          newState.particles = newState.particles!.filter(p => {
+            p.x += p.vx
+            p.y += p.vy
+            p.vy += 0.3 // 重力
+            p.life--
+            return p.life > 0
+          })
+          
+          // カメラ追従（デッドゾーンとスムーズ追従）
+          const centerX = width / 2
+          const centerY = height / 2
+          
+          // プレイヤーの画面上の位置
+          const playerScreenX = player.x - newState.camera.x
+          const playerScreenY = player.y - newState.camera.y
+          
+          // デッドゾーンを超えた場合のみカメラターゲットを更新
+          if (playerScreenX < centerX - newState.camera.deadZoneX!) {
+            newState.camera.targetX = player.x - (centerX - newState.camera.deadZoneX!)
+          } else if (playerScreenX > centerX + newState.camera.deadZoneX!) {
+            newState.camera.targetX = player.x - (centerX + newState.camera.deadZoneX!)
+          }
+          
+          if (playerScreenY < centerY - newState.camera.deadZoneY!) {
+            newState.camera.targetY = player.y - (centerY - newState.camera.deadZoneY!)
+          } else if (playerScreenY > centerY + newState.camera.deadZoneY!) {
+            newState.camera.targetY = player.y - (centerY + newState.camera.deadZoneY!)
+          }
+          
+          // カメラをターゲットにスムーズに移動（lerp）
+          const cameraSpeed = 0.08 // カメラの追従速度
+          newState.camera.x += (newState.camera.targetX! - newState.camera.x) * cameraSpeed
+          newState.camera.y += (newState.camera.targetY! - newState.camera.y) * cameraSpeed
+          
+          // 初期カメラ位置の設定
+          if (newState.camera.targetX === 0 && newState.camera.targetY === 0) {
+            newState.camera.targetX = player.x - centerX
+            newState.camera.targetY = player.y - centerY
+            newState.camera.x = newState.camera.targetX
+            newState.camera.y = newState.camera.targetY
+          }
           
           // 画面外に落ちた場合のリセット
           if (player.y > height * 2) {
