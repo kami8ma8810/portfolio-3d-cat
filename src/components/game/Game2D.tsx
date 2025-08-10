@@ -13,7 +13,7 @@ export function Game2D() {
   const { canvasRef, gameState, setGameState, keysPressed } = useGameEngine({
     width: window.innerWidth,
     height: window.innerHeight,
-    jumpPower: 15,  // ジャンプ力を上げる
+    jumpPower: 20,  // ジャンプ力をさらに上げる
   })
   
   // 初期ステージセットアップ
@@ -155,136 +155,225 @@ export function Game2D() {
           case 'player':
             const isMoving = Math.abs(obj.velocityX) > 0.5
             const isJumping = !gameState.playerState.isGrounded
+            const walkCycle = Date.now() * 0.01
             
-            // 体（楕円形）
-            ctx.fillStyle = '#1a1a1a'
-            ctx.beginPath()
-            ctx.ellipse(
-              obj.x + obj.width / 2, 
-              obj.y + obj.height / 2 + 5, 
-              obj.width / 2 - 2, 
-              obj.height / 2 - 5,
-              0, 0, Math.PI * 2
-            )
-            ctx.fill()
-            
-            // 頭（円形）
-            ctx.beginPath()
-            ctx.arc(
-              obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 5 : -5), 
-              obj.y + 12,
-              12,
-              0, Math.PI * 2
-            )
-            ctx.fill()
-            
-            // 耳（三角形）
-            ctx.fillStyle = '#1a1a1a'
-            const earOffset = gameState.playerState.facingRight ? 5 : -5
-            
-            // 左耳
-            ctx.beginPath()
-            ctx.moveTo(obj.x + obj.width / 2 - 8 + earOffset, obj.y + 8)
-            ctx.lineTo(obj.x + obj.width / 2 - 12 + earOffset, obj.y - 2)
-            ctx.lineTo(obj.x + obj.width / 2 - 4 + earOffset, obj.y + 2)
-            ctx.closePath()
-            ctx.fill()
-            
-            // 右耳
-            ctx.beginPath()
-            ctx.moveTo(obj.x + obj.width / 2 + 8 + earOffset, obj.y + 8)
-            ctx.lineTo(obj.x + obj.width / 2 + 12 + earOffset, obj.y - 2)
-            ctx.lineTo(obj.x + obj.width / 2 + 4 + earOffset, obj.y + 2)
-            ctx.closePath()
-            ctx.fill()
-            
-            // 目（緑色）
-            ctx.fillStyle = '#00ff00'
-            ctx.shadowBlur = 3
-            ctx.shadowColor = '#00ff00'
-            
-            if (gameState.playerState.facingRight) {
-              // 右向き
+            if (isMoving && !isJumping) {
+              // 歩行中は立って歩く姿勢
+              ctx.save()
+              ctx.translate(obj.x + obj.width / 2, obj.y + obj.height)
+              
+              // 体（立っている姿勢）
+              ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
-              ctx.arc(obj.x + obj.width / 2 + 8, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.ellipse(0, -25, 15, 20, 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // 頭
+              ctx.beginPath()
+              ctx.arc(
+                gameState.playerState.facingRight ? 5 : -5,
+                -35,
+                10,
+                0, Math.PI * 2
+              )
+              ctx.fill()
+              
+              // 耳
+              const earDir = gameState.playerState.facingRight ? 1 : -1
+              ctx.beginPath()
+              ctx.moveTo(-6 * earDir, -40)
+              ctx.lineTo(-10 * earDir, -48)
+              ctx.lineTo(-2 * earDir, -43)
+              ctx.closePath()
+              ctx.fill()
+              
+              ctx.beginPath()
+              ctx.moveTo(6 * earDir, -40)
+              ctx.lineTo(10 * earDir, -48)
+              ctx.lineTo(2 * earDir, -43)
+              ctx.closePath()
+              ctx.fill()
+              
+              // 目
+              ctx.fillStyle = '#00ff00'
+              ctx.shadowBlur = 3
+              ctx.shadowColor = '#00ff00'
+              const eyeX = gameState.playerState.facingRight ? 8 : -8
+              ctx.beginPath()
+              ctx.arc(eyeX, -35, 2, 0, Math.PI * 2)
               ctx.fill()
               ctx.beginPath()
-              ctx.arc(obj.x + obj.width / 2 + 2, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.arc(eyeX - 6 * earDir, -35, 2, 0, Math.PI * 2)
               ctx.fill()
+              ctx.shadowBlur = 0
+              
+              // 前足（歩行アニメーション）
+              ctx.strokeStyle = '#1a1a1a'
+              ctx.lineWidth = 5
+              ctx.lineCap = 'round'
+              
+              // 左前足
+              ctx.beginPath()
+              ctx.moveTo(-5, -15)
+              const leftFrontAngle = Math.sin(walkCycle) * 0.3
+              ctx.lineTo(-5 + Math.sin(leftFrontAngle) * 10, -5 + Math.cos(leftFrontAngle) * 10)
+              ctx.stroke()
+              
+              // 右前足
+              ctx.beginPath()
+              ctx.moveTo(5, -15)
+              const rightFrontAngle = Math.sin(walkCycle + Math.PI) * 0.3
+              ctx.lineTo(5 + Math.sin(rightFrontAngle) * 10, -5 + Math.cos(rightFrontAngle) * 10)
+              ctx.stroke()
+              
+              // 後ろ足
+              // 左後ろ足
+              ctx.beginPath()
+              ctx.moveTo(-5, -10)
+              const leftBackAngle = Math.sin(walkCycle + Math.PI) * 0.3
+              ctx.lineTo(-5 + Math.sin(leftBackAngle) * 10, Math.cos(leftBackAngle) * 10)
+              ctx.stroke()
+              
+              // 右後ろ足
+              ctx.beginPath()
+              ctx.moveTo(5, -10)
+              const rightBackAngle = Math.sin(walkCycle) * 0.3
+              ctx.lineTo(5 + Math.sin(rightBackAngle) * 10, Math.cos(rightBackAngle) * 10)
+              ctx.stroke()
+              
+              // しっぽ
+              ctx.beginPath()
+              ctx.moveTo(-10 * earDir, -20)
+              const tailWave = Math.sin(walkCycle * 0.5) * 10
+              ctx.quadraticCurveTo(
+                -20 * earDir, -25 + tailWave,
+                -30 * earDir, -30
+              )
+              ctx.stroke()
+              
+              ctx.restore()
             } else {
-              // 左向き
+              // 静止中またはジャンプ中（元のデザイン）
+              // 体（楕円形）
+              ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
-              ctx.arc(obj.x + obj.width / 2 - 8, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.ellipse(
+                obj.x + obj.width / 2, 
+                obj.y + obj.height / 2 + 5, 
+                obj.width / 2 - 2, 
+                obj.height / 2 - 5,
+                0, 0, Math.PI * 2
+              )
+              ctx.fill()
+              
+              // 頭（円形）
+              ctx.beginPath()
+              ctx.arc(
+                obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 5 : -5), 
+                obj.y + 12,
+                12,
+                0, Math.PI * 2
+              )
+              ctx.fill()
+              
+              // 耳（三角形）
+              ctx.fillStyle = '#1a1a1a'
+              const earOffset = gameState.playerState.facingRight ? 5 : -5
+              
+              // 左耳
+              ctx.beginPath()
+              ctx.moveTo(obj.x + obj.width / 2 - 8 + earOffset, obj.y + 8)
+              ctx.lineTo(obj.x + obj.width / 2 - 12 + earOffset, obj.y - 2)
+              ctx.lineTo(obj.x + obj.width / 2 - 4 + earOffset, obj.y + 2)
+              ctx.closePath()
+              ctx.fill()
+              
+              // 右耳
+              ctx.beginPath()
+              ctx.moveTo(obj.x + obj.width / 2 + 8 + earOffset, obj.y + 8)
+              ctx.lineTo(obj.x + obj.width / 2 + 12 + earOffset, obj.y - 2)
+              ctx.lineTo(obj.x + obj.width / 2 + 4 + earOffset, obj.y + 2)
+              ctx.closePath()
+              ctx.fill()
+              
+              // 目（緑色）
+              ctx.fillStyle = '#00ff00'
+              ctx.shadowBlur = 3
+              ctx.shadowColor = '#00ff00'
+              
+              if (gameState.playerState.facingRight) {
+                // 右向き
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 + 8, obj.y + 10, 2, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 + 2, obj.y + 10, 2, 0, Math.PI * 2)
+                ctx.fill()
+              } else {
+                // 左向き
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 - 8, obj.y + 10, 2, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 - 2, obj.y + 10, 2, 0, Math.PI * 2)
+                ctx.fill()
+              }
+              
+              ctx.shadowBlur = 0
+              
+              // しっぽ（動きに応じて変化）
+              ctx.strokeStyle = '#1a1a1a'
+              ctx.lineWidth = 6
+              ctx.lineCap = 'round'
+              ctx.beginPath()
+              
+              const tailBase = {
+                x: obj.x + (gameState.playerState.facingRight ? 5 : obj.width - 5),
+                y: obj.y + obj.height - 10
+              }
+              
+              if (isJumping) {
+                // ジャンプ中は上向き
+                ctx.moveTo(tailBase.x, tailBase.y)
+                ctx.quadraticCurveTo(
+                  tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
+                  tailBase.y - 10,
+                  tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
+                  tailBase.y - 20
+                )
+              } else {
+                // 静止中は垂れ下がる
+                ctx.moveTo(tailBase.x, tailBase.y)
+                ctx.quadraticCurveTo(
+                  tailBase.x + (gameState.playerState.facingRight ? -10 : 10),
+                  tailBase.y + 10,
+                  tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
+                  tailBase.y + 5
+                )
+              }
+              
+              ctx.stroke()
+              
+              // 足（4本）
+              ctx.fillStyle = '#1a1a1a'
+              ctx.lineWidth = 3
+              
+              // 前足
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 10, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
               ctx.fill()
               ctx.beginPath()
-              ctx.arc(obj.x + obj.width / 2 - 2, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.ellipse(obj.x + 18, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // 後ろ足
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 25, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
+              ctx.fill()
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 33, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
               ctx.fill()
             }
-            
-            ctx.shadowBlur = 0
-            
-            // しっぽ（動きに応じて変化）
-            ctx.strokeStyle = '#1a1a1a'
-            ctx.lineWidth = 6
-            ctx.lineCap = 'round'
-            ctx.beginPath()
-            
-            const tailBase = {
-              x: obj.x + (gameState.playerState.facingRight ? 5 : obj.width - 5),
-              y: obj.y + obj.height - 10
-            }
-            
-            if (isJumping) {
-              // ジャンプ中は上向き
-              ctx.moveTo(tailBase.x, tailBase.y)
-              ctx.quadraticCurveTo(
-                tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
-                tailBase.y - 10,
-                tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
-                tailBase.y - 20
-              )
-            } else if (isMoving) {
-              // 移動中は波打つ
-              const waveOffset = Math.sin(Date.now() * 0.01) * 5
-              ctx.moveTo(tailBase.x, tailBase.y)
-              ctx.quadraticCurveTo(
-                tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
-                tailBase.y + waveOffset,
-                tailBase.x + (gameState.playerState.facingRight ? -25 : 25),
-                tailBase.y - 5
-              )
-            } else {
-              // 静止中は垂れ下がる
-              ctx.moveTo(tailBase.x, tailBase.y)
-              ctx.quadraticCurveTo(
-                tailBase.x + (gameState.playerState.facingRight ? -10 : 10),
-                tailBase.y + 10,
-                tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
-                tailBase.y + 5
-              )
-            }
-            
-            ctx.stroke()
-            
-            // 足（4本）
-            ctx.fillStyle = '#1a1a1a'
-            ctx.lineWidth = 3
-            
-            // 前足
-            ctx.beginPath()
-            ctx.ellipse(obj.x + 10, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
-            ctx.fill()
-            ctx.beginPath()
-            ctx.ellipse(obj.x + 18, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
-            ctx.fill()
-            
-            // 後ろ足
-            ctx.beginPath()
-            ctx.ellipse(obj.x + 25, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
-            ctx.fill()
-            ctx.beginPath()
-            ctx.ellipse(obj.x + 33, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
-            ctx.fill()
             break
             
           case 'platform':
@@ -306,33 +395,109 @@ export function Game2D() {
             break
             
           case 'portal':
-            // ポータル（渦巻き）
-            const portalColors: { [key: string]: string } = {
-              'portal-projects': '#ff6b6b',
-              'portal-about': '#4dabf7',
-              'portal-blog': '#51cf66',
-              'portal-contact': '#ffd43b',
+            // 猫が好きなものとして描画
+            const portalThemes: { [key: string]: { color: string, icon: string } } = {
+              'portal-projects': { color: '#ff6b6b', icon: '🐟' }, // 魚
+              'portal-about': { color: '#4dabf7', icon: '🧶' }, // 毛糸玉
+              'portal-blog': { color: '#51cf66', icon: '🌿' }, // またたび
+              'portal-contact': { color: '#ffd43b', icon: '📦' }, // ダンボール箱
             }
+            
+            const theme = portalThemes[obj.id] || { color: '#fff', icon: '?' }
             
             // ポータルが近くにある場合は光らせる
             if (nearPortal === obj.id) {
-              // 光る効果
               ctx.shadowBlur = 20
-              ctx.shadowColor = portalColors[obj.id] || '#fff'
+              ctx.shadowColor = theme.color
             }
             
-            ctx.fillStyle = portalColors[obj.id] || '#fff'
-            ctx.globalAlpha = nearPortal === obj.id ? 0.9 : 0.8
-            ctx.beginPath()
-            ctx.arc(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width / 2, 0, Math.PI * 2)
-            ctx.fill()
-            
-            // 内側の輪（近くにいる時だけ）
-            if (nearPortal === obj.id) {
-              ctx.globalAlpha = 0.5
-              ctx.beginPath()
-              ctx.arc(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width / 3, 0, Math.PI * 2)
-              ctx.fill()
+            // アイテムの描画
+            switch (obj.id) {
+              case 'portal-projects': // 魚
+                ctx.fillStyle = '#e0e0e0'
+                ctx.beginPath()
+                ctx.ellipse(obj.x + obj.width / 2, obj.y + obj.height / 2, 20, 10, 0, 0, Math.PI * 2)
+                ctx.fill()
+                
+                // 尾ひれ
+                ctx.beginPath()
+                ctx.moveTo(obj.x + obj.width / 2 - 20, obj.y + obj.height / 2)
+                ctx.lineTo(obj.x + obj.width / 2 - 30, obj.y + obj.height / 2 - 10)
+                ctx.lineTo(obj.x + obj.width / 2 - 30, obj.y + obj.height / 2 + 10)
+                ctx.closePath()
+                ctx.fill()
+                
+                // 目
+                ctx.fillStyle = '#000'
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 + 10, obj.y + obj.height / 2 - 3, 2, 0, Math.PI * 2)
+                ctx.fill()
+                break
+                
+              case 'portal-about': // 毛糸玉
+                // 毛糸玉本体
+                ctx.strokeStyle = '#ff69b4'
+                ctx.lineWidth = 2
+                const centerX = obj.x + obj.width / 2
+                const centerY = obj.y + obj.height / 2
+                
+                // 円形に巻かれた毛糸
+                for (let i = 0; i < 10; i++) {
+                  ctx.beginPath()
+                  const angle = (i / 10) * Math.PI * 2
+                  ctx.arc(centerX, centerY, 15, angle, angle + Math.PI * 1.5)
+                  ctx.stroke()
+                }
+                
+                // 垂れ下がる糸
+                ctx.beginPath()
+                ctx.moveTo(centerX + 15, centerY)
+                ctx.quadraticCurveTo(centerX + 25, centerY + 10, centerX + 20, centerY + 20)
+                ctx.stroke()
+                break
+                
+              case 'portal-blog': // またたび
+                // 葉っぱ
+                ctx.fillStyle = '#228b22'
+                ctx.beginPath()
+                ctx.ellipse(obj.x + obj.width / 2 - 5, obj.y + obj.height / 2, 15, 8, -0.3, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.ellipse(obj.x + obj.width / 2 + 5, obj.y + obj.height / 2, 15, 8, 0.3, 0, Math.PI * 2)
+                ctx.fill()
+                
+                // 茎
+                ctx.strokeStyle = '#228b22'
+                ctx.lineWidth = 3
+                ctx.beginPath()
+                ctx.moveTo(obj.x + obj.width / 2, obj.y + obj.height / 2 + 8)
+                ctx.lineTo(obj.x + obj.width / 2, obj.y + obj.height / 2 - 10)
+                ctx.stroke()
+                break
+                
+              case 'portal-contact': // ダンボール箱
+                // 箱本体
+                ctx.fillStyle = '#d2691e'
+                ctx.fillRect(obj.x + 10, obj.y + 15, 30, 25)
+                
+                // 箱の開いた部分
+                ctx.fillStyle = '#8b4513'
+                ctx.beginPath()
+                ctx.moveTo(obj.x + 10, obj.y + 15)
+                ctx.lineTo(obj.x + 5, obj.y + 10)
+                ctx.lineTo(obj.x + 20, obj.y + 10)
+                ctx.lineTo(obj.x + 25, obj.y + 15)
+                ctx.closePath()
+                ctx.fill()
+                
+                ctx.beginPath()
+                ctx.moveTo(obj.x + 25, obj.y + 15)
+                ctx.lineTo(obj.x + 30, obj.y + 10)
+                ctx.lineTo(obj.x + 45, obj.y + 10)
+                ctx.lineTo(obj.x + 40, obj.y + 15)
+                ctx.closePath()
+                ctx.fill()
+                break
             }
             
             ctx.shadowBlur = 0
