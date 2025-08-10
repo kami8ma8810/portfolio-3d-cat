@@ -189,62 +189,92 @@ export function Game2D() {
               ctx.scale(scaleX, scaleY)
               ctx.translate(-(obj.x + obj.width / 2), -(obj.y + obj.height))
               
-              // 体（水平姿勢）
+              // 体（スリムな水平姿勢）
               ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
               ctx.ellipse(
                 obj.x + obj.width / 2, 
                 obj.y + obj.height / 2 + 3, 
-                obj.width / 2 + 5, 
-                obj.height / 2 - 5,
+                obj.width / 2 + 2, 
+                obj.height / 2 - 8,
                 0, 0, Math.PI * 2
               )
               ctx.fill()
               
-              // 頭（前方に配置）
+              // 頭（横顔・前方に配置）
+              const headX = obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 18 : -18)
+              const headY = obj.y + obj.height / 2 - 2
+              
               ctx.beginPath()
-              ctx.arc(
-                obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 15 : -15), 
-                obj.y + obj.height / 2,
-                10,
-                0, Math.PI * 2
-              )
+              // 頭の形（横顔のシルエット）
+              if (gameState.playerState.facingRight) {
+                ctx.moveTo(headX - 5, headY - 8)
+                ctx.quadraticCurveTo(headX + 10, headY - 8, headX + 10, headY)
+                ctx.quadraticCurveTo(headX + 10, headY + 8, headX - 5, headY + 8)
+                ctx.quadraticCurveTo(headX - 10, headY, headX - 5, headY - 8)
+              } else {
+                ctx.moveTo(headX + 5, headY - 8)
+                ctx.quadraticCurveTo(headX - 10, headY - 8, headX - 10, headY)
+                ctx.quadraticCurveTo(headX - 10, headY + 8, headX + 5, headY + 8)
+                ctx.quadraticCurveTo(headX + 10, headY, headX + 5, headY - 8)
+              }
+              ctx.closePath()
               ctx.fill()
               
-              // 耳（三角形）
+              // 耳（横顔では1つだけ見える）
               ctx.fillStyle = '#1a1a1a'
-              const earOffset = gameState.playerState.facingRight ? 15 : -15
               
-              // 左耳
-              ctx.beginPath()
-              ctx.moveTo(obj.x + obj.width / 2 - 5 + earOffset, obj.y + obj.height / 2 - 5)
-              ctx.lineTo(obj.x + obj.width / 2 - 8 + earOffset, obj.y + obj.height / 2 - 15)
-              ctx.lineTo(obj.x + obj.width / 2 - 2 + earOffset, obj.y + obj.height / 2 - 8)
-              ctx.closePath()
-              ctx.fill()
+              if (gameState.playerState.facingRight) {
+                // 右向き - 左耳（奥）が少し見える
+                ctx.beginPath()
+                ctx.moveTo(headX - 8, headY - 6)
+                ctx.lineTo(headX - 10, headY - 14)
+                ctx.lineTo(headX - 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+                
+                // 右耳（手前）
+                ctx.beginPath()
+                ctx.moveTo(headX - 2, headY - 8)
+                ctx.lineTo(headX, headY - 16)
+                ctx.lineTo(headX + 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+              } else {
+                // 左向き - 右耳（奥）が少し見える
+                ctx.beginPath()
+                ctx.moveTo(headX + 8, headY - 6)
+                ctx.lineTo(headX + 10, headY - 14)
+                ctx.lineTo(headX + 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+                
+                // 左耳（手前）
+                ctx.beginPath()
+                ctx.moveTo(headX + 2, headY - 8)
+                ctx.lineTo(headX, headY - 16)
+                ctx.lineTo(headX - 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+              }
               
-              // 右耳
-              ctx.beginPath()
-              ctx.moveTo(obj.x + obj.width / 2 + 5 + earOffset, obj.y + obj.height / 2 - 5)
-              ctx.lineTo(obj.x + obj.width / 2 + 8 + earOffset, obj.y + obj.height / 2 - 15)
-              ctx.lineTo(obj.x + obj.width / 2 + 2 + earOffset, obj.y + obj.height / 2 - 8)
-              ctx.closePath()
-              ctx.fill()
-              
-              // 顔の詳細（歩行中）
-              const faceX = obj.x + obj.width / 2 + earOffset
-              const faceY = obj.y + obj.height / 2
-              
+              // 顔の詳細（横顔）
               // 鼻
               ctx.fillStyle = '#ff69b4'
               ctx.beginPath()
-              ctx.moveTo(faceX + (gameState.playerState.facingRight ? 20 : -20), faceY)
-              ctx.lineTo(faceX + (gameState.playerState.facingRight ? 18 : -18), faceY + 1)
-              ctx.lineTo(faceX + (gameState.playerState.facingRight ? 22 : -22), faceY + 1)
+              if (gameState.playerState.facingRight) {
+                ctx.moveTo(headX + 10, headY)
+                ctx.lineTo(headX + 8, headY + 1)
+                ctx.lineTo(headX + 10, headY + 2)
+              } else {
+                ctx.moveTo(headX - 10, headY)
+                ctx.lineTo(headX - 8, headY + 1)
+                ctx.lineTo(headX - 10, headY + 2)
+              }
               ctx.closePath()
               ctx.fill()
               
-              // 目（猫の目）
+              // 目（横顔では1つだけ）
               ctx.fillStyle = '#00ff00'
               ctx.shadowBlur = 3
               ctx.shadowColor = '#00ff00'
@@ -252,44 +282,48 @@ export function Game2D() {
               if (gameState.playerState.facingRight) {
                 // 右向き
                 ctx.beginPath()
-                ctx.ellipse(faceX + 15, faceY - 2, 3, 2, 0, 0, Math.PI * 2)
-                ctx.fill()
-                ctx.beginPath()
-                ctx.ellipse(faceX + 15, faceY + 2, 3, 2, 0, 0, Math.PI * 2)
+                ctx.ellipse(headX + 2, headY - 2, 2, 3, 0, 0, Math.PI * 2)
                 ctx.fill()
                 
                 // 瞳孔
                 ctx.fillStyle = '#000'
-                ctx.fillRect(faceX + 15, faceY - 3, 1, 2)
-                ctx.fillRect(faceX + 15, faceY + 1, 1, 2)
+                ctx.fillRect(headX + 2, headY - 3, 1, 3)
               } else {
                 // 左向き
                 ctx.beginPath()
-                ctx.ellipse(faceX - 15, faceY - 2, 3, 2, 0, 0, Math.PI * 2)
-                ctx.fill()
-                ctx.beginPath()
-                ctx.ellipse(faceX - 15, faceY + 2, 3, 2, 0, 0, Math.PI * 2)
+                ctx.ellipse(headX - 2, headY - 2, 2, 3, 0, 0, Math.PI * 2)
                 ctx.fill()
                 
                 // 瞳孔
                 ctx.fillStyle = '#000'
-                ctx.fillRect(faceX - 16, faceY - 3, 1, 2)
-                ctx.fillRect(faceX - 16, faceY + 1, 1, 2)
+                ctx.fillRect(headX - 3, headY - 3, 1, 3)
               }
               
               ctx.shadowBlur = 0
               
-              // ひげ
+              // ひげ（横顔）
               ctx.strokeStyle = '#1a1a1a'
               ctx.lineWidth = 1
-              ctx.beginPath()
-              ctx.moveTo(faceX + (gameState.playerState.facingRight ? 18 : -18), faceY)
-              ctx.lineTo(faceX + (gameState.playerState.facingRight ? 28 : -28), faceY - 1)
-              ctx.stroke()
-              ctx.beginPath()
-              ctx.moveTo(faceX + (gameState.playerState.facingRight ? 18 : -18), faceY + 2)
-              ctx.lineTo(faceX + (gameState.playerState.facingRight ? 28 : -28), faceY + 2)
-              ctx.stroke()
+              
+              if (gameState.playerState.facingRight) {
+                ctx.beginPath()
+                ctx.moveTo(headX + 5, headY)
+                ctx.lineTo(headX + 15, headY - 1)
+                ctx.stroke()
+                ctx.beginPath()
+                ctx.moveTo(headX + 5, headY + 2)
+                ctx.lineTo(headX + 15, headY + 2)
+                ctx.stroke()
+              } else {
+                ctx.beginPath()
+                ctx.moveTo(headX - 5, headY)
+                ctx.lineTo(headX - 15, headY - 1)
+                ctx.stroke()
+                ctx.beginPath()
+                ctx.moveTo(headX - 5, headY + 2)
+                ctx.lineTo(headX - 15, headY + 2)
+                ctx.stroke()
+              }
               
               // 足（4本の歩行アニメーション）
               ctx.fillStyle = '#1a1a1a'
@@ -346,9 +380,9 @@ export function Game2D() {
               
               // 体全体を少し回転
               const jumpRotation = gameState.playerState.facingRight ? 0.1 : -0.1
-              const stretchFactor = 1.3 // 体を伸ばす
+              const stretchFactor = 1.4 // 体を伸ばす
               
-              // 体（アーチ状に曲げる）
+              // 体（スリムでアーチ状）
               ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
               
@@ -360,7 +394,7 @@ export function Game2D() {
                 centerX,
                 centerY,
                 obj.width / 2 * stretchFactor,
-                obj.height / 2,
+                obj.height / 2 - 5,
                 jumpRotation,
                 0,
                 Math.PI * 2
