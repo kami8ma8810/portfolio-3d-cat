@@ -1,16 +1,16 @@
 @import './tokens.css';
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 @layer base {
   body {
-    @apply bg-primary-white text-primary-black;
+    background-color: var(--color-white);
+    color: var(--color-black);
   }
 
   /* フォーカス時のスタイル */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary-yellow;
+    outline: 2px solid var(--color-yellow);
+    outline-offset: 2px;
   }
 
   /* reduced-motion対応 */
@@ -23,5 +23,39 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* カスタムユーティリティクラス */
+@layer utilities {
+  .bg-primary-yellow {
+    background-color: var(--color-yellow);
+  }
+  .bg-primary-black {
+    background-color: var(--color-black);
+  }
+  .bg-primary-white {
+    background-color: var(--color-white);
+  }
+  .text-primary-yellow {
+    color: var(--color-yellow);
+  }
+  .text-primary-black {
+    color: var(--color-black);
+  }
+  .text-primary-white {
+    color: var(--color-white);
+  }
+  .border-primary-yellow {
+    border-color: var(--color-yellow);
+  }
+  .border-primary-black {
+    border-color: var(--color-black);
+  }
+  .border-primary-white {
+    border-color: var(--color-white);
+  }
+  .outline-primary-yellow {
+    outline-color: var(--color-yellow);
   }
 }

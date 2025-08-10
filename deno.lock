@@ -209,6 +209,7 @@
         "npm:@playwright/test@^1.54.2",
         "npm:@react-three/drei@^9.105.6",
         "npm:@react-three/fiber@^8.15.19",
+        "npm:@tailwindcss/postcss@^4.1.11",
         "npm:@tanstack/react-router@^1.131.2",
         "npm:@tanstack/router-vite-plugin@^1.131.2",
         "npm:@testing-library/jest-dom@^6.6.4",

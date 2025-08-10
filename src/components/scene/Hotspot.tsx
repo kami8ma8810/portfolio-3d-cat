@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Text, Box } from '@react-three/drei'
+import { Box, Html } from '@react-three/drei'
 import { useNavigate } from '@tanstack/react-router'
 import * as THREE from 'three'
 import { useCatStore } from '../../stores/catStore'
@@ -58,27 +58,33 @@ export function Hotspot({ position, label, href, color }: HotspotProps) {
       </Box>
       
       {/* ラベル */}
-      <Text
+      <Html
         position={[0, 2, 0]}
-        fontSize={0.5}
-        color={isNear ? '#FFFFFF' : '#666666'}
-        anchorX="center"
-        anchorY="middle"
+        center
+        style={{
+          fontSize: '14px',
+          color: isNear ? '#FFFFFF' : '#666666',
+          userSelect: 'none',
+          textShadow: '0 0 4px rgba(0,0,0,0.5)'
+        }}
       >
         {label}
-      </Text>
+      </Html>
       
       {/* 近づいたときの指示 */}
       {isNear && (
-        <Text
+        <Html
           position={[0, -1, 0]}
-          fontSize={0.3}
-          color="#FBBF24"
-          anchorX="center"
-          anchorY="middle"
+          center
+          style={{
+            fontSize: '12px',
+            color: '#FBBF24',
+            userSelect: 'none',
+            textShadow: '0 0 4px rgba(0,0,0,0.5)'
+          }}
         >
           クリックで移動
-        </Text>
+        </Html>
       )}
     </group>
   )
