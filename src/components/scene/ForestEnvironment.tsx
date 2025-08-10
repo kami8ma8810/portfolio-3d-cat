@@ -3,6 +3,7 @@ import * as THREE from 'three'
 
 export function ForestEnvironment() {
   const grassRef = useRef<THREE.InstancedMesh>(null)
+  const treeRef = useRef<THREE.Group>(null)
   
   // 草のインスタンスを生成
   useMemo(() => {
