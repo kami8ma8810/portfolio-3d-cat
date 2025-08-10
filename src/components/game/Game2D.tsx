@@ -375,182 +375,185 @@ export function Game2D() {
               
               ctx.restore()
             } else if (isJumping) {
-              // ジャンプ中専用ポーズ（猫らしく）
+              // ジャンプ中（移動中と似た姿勢）
               ctx.save()
+              ctx.translate(obj.x + obj.width / 2, obj.y + obj.height)
+              ctx.scale(scaleX, scaleY)
+              ctx.translate(-(obj.x + obj.width / 2), -(obj.y + obj.height))
               
-              // 体全体を少し回転
-              const jumpRotation = gameState.playerState.facingRight ? 0.1 : -0.1
-              const stretchFactor = 1.4 // 体を伸ばす
-              
-              // 体（スリムでアーチ状）
+              // 体（水平姿勢、少し伸びる）
               ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
-              
-              // 背中のアーチを描く
-              const centerX = obj.x + obj.width / 2
-              const centerY = obj.y + obj.height / 2
-              
               ctx.ellipse(
-                centerX,
-                centerY,
-                obj.width / 2 * stretchFactor,
-                obj.height / 2 - 5,
-                jumpRotation,
-                0,
-                Math.PI * 2
+                obj.x + obj.width / 2, 
+                obj.y + obj.height / 2 + 3, 
+                obj.width / 2 + 3, 
+                obj.height / 2 - 9,
+                0, 0, Math.PI * 2
               )
               ctx.fill()
               
-              // 頭（前方に伸ばす）
-              const headX = centerX + (gameState.playerState.facingRight ? 18 : -18)
-              const headY = centerY - 5
+              // 頭（横顔・前方に配置）
+              const headX = obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 20 : -20)
+              const headY = obj.y + obj.height / 2 - 2
               
               ctx.beginPath()
-              ctx.arc(headX, headY, 10, 0, Math.PI * 2)
-              ctx.fill()
-              
-              // 耳（後ろに倒れる）
-              const earBaseX = headX
-              const earBaseY = headY - 8
-              
-              // 左耳
-              ctx.beginPath()
-              ctx.moveTo(earBaseX - 6, earBaseY)
-              ctx.lineTo(earBaseX - 10 - (gameState.playerState.facingRight ? 3 : -3), earBaseY - 8)
-              ctx.lineTo(earBaseX - 3, earBaseY - 3)
+              // 頭の形（横顔のシルエット）
+              if (gameState.playerState.facingRight) {
+                ctx.moveTo(headX - 5, headY - 8)
+                ctx.quadraticCurveTo(headX + 10, headY - 8, headX + 10, headY)
+                ctx.quadraticCurveTo(headX + 10, headY + 8, headX - 5, headY + 8)
+                ctx.quadraticCurveTo(headX - 10, headY, headX - 5, headY - 8)
+              } else {
+                ctx.moveTo(headX + 5, headY - 8)
+                ctx.quadraticCurveTo(headX - 10, headY - 8, headX - 10, headY)
+                ctx.quadraticCurveTo(headX - 10, headY + 8, headX + 5, headY + 8)
+                ctx.quadraticCurveTo(headX + 10, headY, headX + 5, headY - 8)
+              }
               ctx.closePath()
               ctx.fill()
               
-              // 右耳  
-              ctx.beginPath()
-              ctx.moveTo(earBaseX + 6, earBaseY)
-              ctx.lineTo(earBaseX + 10 - (gameState.playerState.facingRight ? 3 : -3), earBaseY - 8)
-              ctx.lineTo(earBaseX + 3, earBaseY - 3)
-              ctx.closePath()
-              ctx.fill()
+              // 耳（後ろに少し倒れる）
+              ctx.fillStyle = '#1a1a1a'
               
-              // 顔の詳細
-              // 鼻（小さな三角形）
+              if (gameState.playerState.facingRight) {
+                // 右向き - 左耳（奥）
+                ctx.beginPath()
+                ctx.moveTo(headX - 8, headY - 6)
+                ctx.lineTo(headX - 12, headY - 13)
+                ctx.lineTo(headX - 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+                
+                // 右耳（手前）
+                ctx.beginPath()
+                ctx.moveTo(headX - 2, headY - 8)
+                ctx.lineTo(headX - 2, headY - 15)
+                ctx.lineTo(headX + 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+              } else {
+                // 左向き - 右耳（奥）
+                ctx.beginPath()
+                ctx.moveTo(headX + 8, headY - 6)
+                ctx.lineTo(headX + 12, headY - 13)
+                ctx.lineTo(headX + 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+                
+                // 左耳（手前）
+                ctx.beginPath()
+                ctx.moveTo(headX + 2, headY - 8)
+                ctx.lineTo(headX + 2, headY - 15)
+                ctx.lineTo(headX - 4, headY - 10)
+                ctx.closePath()
+                ctx.fill()
+              }
+              
+              // 顔の詳細（横顔）- 移動中と同じ
+              // 鼻
               ctx.fillStyle = '#ff69b4'
               ctx.beginPath()
-              ctx.moveTo(headX + (gameState.playerState.facingRight ? 8 : -8), headY)
-              ctx.lineTo(headX + (gameState.playerState.facingRight ? 6 : -6), headY + 2)
-              ctx.lineTo(headX + (gameState.playerState.facingRight ? 10 : -10), headY + 2)
+              if (gameState.playerState.facingRight) {
+                ctx.moveTo(headX + 10, headY)
+                ctx.lineTo(headX + 8, headY + 1)
+                ctx.lineTo(headX + 10, headY + 2)
+              } else {
+                ctx.moveTo(headX - 10, headY)
+                ctx.lineTo(headX - 8, headY + 1)
+                ctx.lineTo(headX - 10, headY + 2)
+              }
               ctx.closePath()
               ctx.fill()
               
-              // 目（集中した細い目）
+              // 目（細めの目）
               ctx.strokeStyle = '#00ff00'
               ctx.lineWidth = 2
               ctx.shadowBlur = 3
               ctx.shadowColor = '#00ff00'
               
               if (gameState.playerState.facingRight) {
-                // 右向き
                 ctx.beginPath()
-                ctx.moveTo(headX + 3, headY - 3)
-                ctx.lineTo(headX + 6, headY - 2)
-                ctx.stroke()
-                
-                ctx.beginPath()
-                ctx.moveTo(headX - 3, headY - 3)
-                ctx.lineTo(headX, headY - 2)
+                ctx.moveTo(headX + 1, headY - 3)
+                ctx.lineTo(headX + 4, headY - 2)
                 ctx.stroke()
               } else {
-                // 左向き
                 ctx.beginPath()
-                ctx.moveTo(headX - 3, headY - 3)
-                ctx.lineTo(headX - 6, headY - 2)
-                ctx.stroke()
-                
-                ctx.beginPath()
-                ctx.moveTo(headX + 3, headY - 3)
-                ctx.lineTo(headX, headY - 2)
+                ctx.moveTo(headX - 1, headY - 3)
+                ctx.lineTo(headX - 4, headY - 2)
                 ctx.stroke()
               }
               
               ctx.shadowBlur = 0
               
-              // ひげ
+              // ひげ（横顔）
               ctx.strokeStyle = '#1a1a1a'
               ctx.lineWidth = 1
               
-              // 右ひげ
-              ctx.beginPath()
-              ctx.moveTo(headX + (gameState.playerState.facingRight ? 8 : -8), headY + 1)
-              ctx.lineTo(headX + (gameState.playerState.facingRight ? 18 : -18), headY)
-              ctx.stroke()
+              if (gameState.playerState.facingRight) {
+                ctx.beginPath()
+                ctx.moveTo(headX + 5, headY)
+                ctx.lineTo(headX + 15, headY - 1)
+                ctx.stroke()
+                ctx.beginPath()
+                ctx.moveTo(headX + 5, headY + 2)
+                ctx.lineTo(headX + 15, headY + 2)
+                ctx.stroke()
+              } else {
+                ctx.beginPath()
+                ctx.moveTo(headX - 5, headY)
+                ctx.lineTo(headX - 15, headY - 1)
+                ctx.stroke()
+                ctx.beginPath()
+                ctx.moveTo(headX - 5, headY + 2)
+                ctx.lineTo(headX - 15, headY + 2)
+                ctx.stroke()
+              }
               
-              ctx.beginPath()
-              ctx.moveTo(headX + (gameState.playerState.facingRight ? 8 : -8), headY + 3)
-              ctx.lineTo(headX + (gameState.playerState.facingRight ? 18 : -18), headY + 4)
-              ctx.stroke()
-              
-              // 足（4本すべて伸ばす）
+              // 足（ジャンプ中は少し曲げる）
               ctx.fillStyle = '#1a1a1a'
               
-              // 前足（前方に伸ばす）
-              const frontLegX = centerX + (gameState.playerState.facingRight ? 5 : -5)
-              const frontLegY = centerY - 5
+              // 前足（少し前に）
+              const jumpOffset = 3
               
               // 左前足
-              ctx.save()
-              ctx.translate(frontLegX - 5, frontLegY)
-              ctx.rotate(gameState.playerState.facingRight ? -0.5 : 0.5)
-              ctx.fillRect(-2, 0, 4, 15)
               ctx.beginPath()
-              ctx.arc(0, 15, 3, 0, Math.PI * 2)
+              ctx.ellipse(obj.x + 12 + jumpOffset, obj.y + obj.height - 8, 3, 6, 0.2, 0, Math.PI * 2)
               ctx.fill()
-              ctx.restore()
               
               // 右前足
-              ctx.save()
-              ctx.translate(frontLegX + 5, frontLegY)
-              ctx.rotate(gameState.playerState.facingRight ? -0.3 : 0.3)
-              ctx.fillRect(-2, 0, 4, 15)
               ctx.beginPath()
-              ctx.arc(0, 15, 3, 0, Math.PI * 2)
+              ctx.ellipse(obj.x + 20 + jumpOffset, obj.y + obj.height - 8, 3, 6, 0.1, 0, Math.PI * 2)
               ctx.fill()
-              ctx.restore()
               
-              // 後ろ足（後方に伸ばす）
-              const backLegX = centerX - (gameState.playerState.facingRight ? 5 : -5)
-              const backLegY = centerY + 5
-              
+              // 後ろ足（少し後ろに）
               // 左後ろ足
-              ctx.save()
-              ctx.translate(backLegX - 5, backLegY)
-              ctx.rotate(gameState.playerState.facingRight ? 0.7 : -0.7)
-              ctx.fillRect(-2, 0, 4, 18)
               ctx.beginPath()
-              ctx.arc(0, 18, 3, 0, Math.PI * 2)
+              ctx.ellipse(obj.x + 25 - jumpOffset, obj.y + obj.height - 5, 3, 6, -0.2, 0, Math.PI * 2)
               ctx.fill()
-              ctx.restore()
               
               // 右後ろ足
-              ctx.save()
-              ctx.translate(backLegX + 5, backLegY)
-              ctx.rotate(gameState.playerState.facingRight ? 0.5 : -0.5)
-              ctx.fillRect(-2, 0, 4, 18)
               ctx.beginPath()
-              ctx.arc(0, 18, 3, 0, Math.PI * 2)
+              ctx.ellipse(obj.x + 33 - jumpOffset, obj.y + obj.height - 5, 3, 6, -0.1, 0, Math.PI * 2)
               ctx.fill()
-              ctx.restore()
               
-              // しっぽ（S字カーブ）
+              // しっぽ（上向き）
               ctx.strokeStyle = '#1a1a1a'
               ctx.lineWidth = 6
               ctx.lineCap = 'round'
               ctx.beginPath()
               
-              const tailStartX = centerX - (gameState.playerState.facingRight ? 15 : -15)
-              const tailStartY = centerY
+              const tailBase = {
+                x: obj.x + (gameState.playerState.facingRight ? 5 : obj.width - 5),
+                y: obj.y + obj.height / 2
+              }
               
-              ctx.moveTo(tailStartX, tailStartY)
-              ctx.bezierCurveTo(
-                tailStartX - (gameState.playerState.facingRight ? 10 : -10), tailStartY - 10,
-                tailStartX - (gameState.playerState.facingRight ? 20 : -20), tailStartY - 15,
-                tailStartX - (gameState.playerState.facingRight ? 25 : -25), tailStartY - 25
+              ctx.moveTo(tailBase.x, tailBase.y)
+              ctx.quadraticCurveTo(
+                tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
+                tailBase.y - 15,
+                tailBase.x + (gameState.playerState.facingRight ? -25 : 25),
+                tailBase.y - 20
               )
               ctx.stroke()
               
