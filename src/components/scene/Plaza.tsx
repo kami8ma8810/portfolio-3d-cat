@@ -1,8 +1,9 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Grid, Environment } from '@react-three/drei'
+import { OrbitControls, Sky, Environment } from '@react-three/drei'
 import { Suspense } from 'react'
-import { Cat } from './Cat'
-import { Hotspot } from './Hotspot'
+import { BlackCat } from './BlackCat'
+import { CatItem } from './CatItem'
+import { ForestEnvironment } from './ForestEnvironment'
 import { CameraRig } from './CameraRig'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 
@@ -18,68 +19,72 @@ export function Plaza() {
         shadows
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.5} />
+          {/* 空 */}
+          <Sky 
+            distance={450000}
+            sunPosition={[100, 20, 100]}
+            inclination={0.6}
+            azimuth={0.25}
+          />
+          
+          {/* ライティング */}
+          <ambientLight intensity={0.4} />
           <directionalLight
-            position={[10, 10, 5]}
-            intensity={1}
+            position={[10, 20, 5]}
+            intensity={1.2}
             castShadow
             shadow-mapSize={[2048, 2048]}
+            shadow-camera-far={50}
+            shadow-camera-left={-20}
+            shadow-camera-right={20}
+            shadow-camera-top={20}
+            shadow-camera-bottom={-20}
           />
           
-          {/* 地面 */}
-          <Grid
-            args={[20, 20]}
-            cellSize={1}
-            cellThickness={0.5}
-            cellColor="#6f6f6f"
-            sectionSize={5}
-            sectionThickness={1}
-            sectionColor="#FBBF24"
-            fadeDistance={30}
-            fadeStrength={1}
-            followCamera={false}
-          />
+          {/* 森の環境 */}
+          <ForestEnvironment />
           
-          {/* 猫キャラクター */}
-          <Cat />
+          {/* 黒猫キャラクター */}
+          <BlackCat />
           
-          {/* ホットスポット */}
-          <Hotspot
-            position={[5, 1, 0]}
+          {/* 猫が好きなアイテム */}
+          <CatItem
+            position={[5, 0.5, 0]}
             label="Projects"
             href="/projects"
-            color="#FBBF24"
+            type="yarn"
           />
-          <Hotspot
-            position={[-5, 1, 0]}
+          <CatItem
+            position={[-5, 0.5, 0]}
             label="About"
             href="/about"
-            color="#FBBF24"
+            type="fish"
           />
-          <Hotspot
-            position={[0, 1, 5]}
+          <CatItem
+            position={[0, 0.5, 5]}
             label="Blog"
             href="/blog"
-            color="#FBBF24"
+            type="catnip"
           />
-          <Hotspot
-            position={[0, 1, -5]}
+          <CatItem
+            position={[0, 0.5, -5]}
             label="Contact"
             href="/contact"
-            color="#FBBF24"
+            type="toy"
           />
           
           {/* カメラコントロール */}
           <CameraRig />
           <OrbitControls
             enablePan={false}
-            maxPolarAngle={Math.PI / 2}
-            minDistance={5}
-            maxDistance={20}
+            maxPolarAngle={Math.PI / 2.5}
+            minDistance={3}
+            maxDistance={15}
+            target={[0, 0, 0]}
           />
           
-          {/* 環境 */}
-          <Environment preset="city" />
+          {/* 環境マッピング */}
+          <Environment preset="forest" />
         </Suspense>
       </Canvas>
       

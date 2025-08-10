@@ -33,6 +33,7 @@
     "@notionhq/client": "^4.0.1",
     "@react-three/drei": "^9.105.6",
     "@react-three/fiber": "^8.15.19",
+    "@react-three/gltfjsx": "^4.3.4",
     "@tanstack/react-router": "^1.131.2",
     "gray-matter": "^4.0.3",
     "notion-to-md": "^3.1.9",
