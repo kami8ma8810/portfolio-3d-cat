@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useGameEngine, GameObject } from '../../hooks/useGameEngine'
 import { GameController } from './GameController'
 import { useNavigate } from '@tanstack/react-router'
@@ -9,9 +9,11 @@ const STAGE_HEIGHT = 400
 export function Game2D() {
   const navigate = useNavigate()
   const containerRef = useRef<HTMLDivElement>(null)
+  const [nearPortal, setNearPortal] = useState<string | null>(null)
   const { canvasRef, gameState, setGameState, keysPressed } = useGameEngine({
-    width: 800,
-    height: 400,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    jumpPower: 15,  // ジャンプ力を上げる
   })
   
   // 初期ステージセットアップ
@@ -32,8 +34,8 @@ export function Game2D() {
       {
         id: 'ground',
         x: 0,
-        y: 350,
-        width: STAGE_WIDTH,
+        y: window.innerHeight - 50,
+        width: STAGE_WIDTH * 2,
         height: 50,
         velocityX: 0,
         velocityY: 0,
@@ -43,7 +45,7 @@ export function Game2D() {
       {
         id: 'platform1',
         x: 300,
-        y: 250,
+        y: window.innerHeight - 200,
         width: 150,
         height: 20,
         velocityX: 0,
@@ -53,7 +55,7 @@ export function Game2D() {
       {
         id: 'platform2',
         x: 550,
-        y: 180,
+        y: window.innerHeight - 300,
         width: 150,
         height: 20,
         velocityX: 0,
@@ -63,7 +65,7 @@ export function Game2D() {
       {
         id: 'platform3',
         x: 800,
-        y: 250,
+        y: window.innerHeight - 200,
         width: 150,
         height: 20,
         velocityX: 0,
@@ -74,7 +76,7 @@ export function Game2D() {
       {
         id: 'portal-projects',
         x: 350,
-        y: 200,
+        y: window.innerHeight - 250,
         width: 50,
         height: 50,
         velocityX: 0,
@@ -84,7 +86,7 @@ export function Game2D() {
       {
         id: 'portal-about',
         x: 600,
-        y: 130,
+        y: window.innerHeight - 350,
         width: 50,
         height: 50,
         velocityX: 0,
@@ -94,7 +96,7 @@ export function Game2D() {
       {
         id: 'portal-blog',
         x: 850,
-        y: 200,
+        y: window.innerHeight - 250,
         width: 50,
         height: 50,
         velocityX: 0,
@@ -104,7 +106,7 @@ export function Game2D() {
       {
         id: 'portal-contact',
         x: 1050,
-        y: 300,
+        y: window.innerHeight - 100,
         width: 50,
         height: 50,
         velocityX: 0,
@@ -151,34 +153,137 @@ export function Game2D() {
       gameState.objects.forEach(obj => {
         switch (obj.type) {
           case 'player':
-            // 黒猫
-            ctx.fillStyle = '#1a1a1a'
-            ctx.fillRect(obj.x, obj.y, obj.width, obj.height)
+            const isMoving = Math.abs(obj.velocityX) > 0.5
+            const isJumping = !gameState.playerState.isGrounded
             
-            // 顔の向き
-            ctx.fillStyle = '#00ff00'
-            if (gameState.playerState.facingRight) {
-              ctx.fillRect(obj.x + 25, obj.y + 10, 5, 5)
-              ctx.fillRect(obj.x + 25, obj.y + 20, 5, 5)
-            } else {
-              ctx.fillRect(obj.x + 10, obj.y + 10, 5, 5)
-              ctx.fillRect(obj.x + 10, obj.y + 20, 5, 5)
-            }
-            
-            // 耳
+            // 体（楕円形）
             ctx.fillStyle = '#1a1a1a'
             ctx.beginPath()
-            ctx.moveTo(obj.x + 5, obj.y)
-            ctx.lineTo(obj.x + 10, obj.y - 10)
-            ctx.lineTo(obj.x + 15, obj.y)
+            ctx.ellipse(
+              obj.x + obj.width / 2, 
+              obj.y + obj.height / 2 + 5, 
+              obj.width / 2 - 2, 
+              obj.height / 2 - 5,
+              0, 0, Math.PI * 2
+            )
+            ctx.fill()
+            
+            // 頭（円形）
+            ctx.beginPath()
+            ctx.arc(
+              obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 5 : -5), 
+              obj.y + 12,
+              12,
+              0, Math.PI * 2
+            )
+            ctx.fill()
+            
+            // 耳（三角形）
+            ctx.fillStyle = '#1a1a1a'
+            const earOffset = gameState.playerState.facingRight ? 5 : -5
+            
+            // 左耳
+            ctx.beginPath()
+            ctx.moveTo(obj.x + obj.width / 2 - 8 + earOffset, obj.y + 8)
+            ctx.lineTo(obj.x + obj.width / 2 - 12 + earOffset, obj.y - 2)
+            ctx.lineTo(obj.x + obj.width / 2 - 4 + earOffset, obj.y + 2)
             ctx.closePath()
             ctx.fill()
             
+            // 右耳
             ctx.beginPath()
-            ctx.moveTo(obj.x + 25, obj.y)
-            ctx.lineTo(obj.x + 30, obj.y - 10)
-            ctx.lineTo(obj.x + 35, obj.y)
+            ctx.moveTo(obj.x + obj.width / 2 + 8 + earOffset, obj.y + 8)
+            ctx.lineTo(obj.x + obj.width / 2 + 12 + earOffset, obj.y - 2)
+            ctx.lineTo(obj.x + obj.width / 2 + 4 + earOffset, obj.y + 2)
             ctx.closePath()
+            ctx.fill()
+            
+            // 目（緑色）
+            ctx.fillStyle = '#00ff00'
+            ctx.shadowBlur = 3
+            ctx.shadowColor = '#00ff00'
+            
+            if (gameState.playerState.facingRight) {
+              // 右向き
+              ctx.beginPath()
+              ctx.arc(obj.x + obj.width / 2 + 8, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.fill()
+              ctx.beginPath()
+              ctx.arc(obj.x + obj.width / 2 + 2, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.fill()
+            } else {
+              // 左向き
+              ctx.beginPath()
+              ctx.arc(obj.x + obj.width / 2 - 8, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.fill()
+              ctx.beginPath()
+              ctx.arc(obj.x + obj.width / 2 - 2, obj.y + 10, 2, 0, Math.PI * 2)
+              ctx.fill()
+            }
+            
+            ctx.shadowBlur = 0
+            
+            // しっぽ（動きに応じて変化）
+            ctx.strokeStyle = '#1a1a1a'
+            ctx.lineWidth = 6
+            ctx.lineCap = 'round'
+            ctx.beginPath()
+            
+            const tailBase = {
+              x: obj.x + (gameState.playerState.facingRight ? 5 : obj.width - 5),
+              y: obj.y + obj.height - 10
+            }
+            
+            if (isJumping) {
+              // ジャンプ中は上向き
+              ctx.moveTo(tailBase.x, tailBase.y)
+              ctx.quadraticCurveTo(
+                tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
+                tailBase.y - 10,
+                tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
+                tailBase.y - 20
+              )
+            } else if (isMoving) {
+              // 移動中は波打つ
+              const waveOffset = Math.sin(Date.now() * 0.01) * 5
+              ctx.moveTo(tailBase.x, tailBase.y)
+              ctx.quadraticCurveTo(
+                tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
+                tailBase.y + waveOffset,
+                tailBase.x + (gameState.playerState.facingRight ? -25 : 25),
+                tailBase.y - 5
+              )
+            } else {
+              // 静止中は垂れ下がる
+              ctx.moveTo(tailBase.x, tailBase.y)
+              ctx.quadraticCurveTo(
+                tailBase.x + (gameState.playerState.facingRight ? -10 : 10),
+                tailBase.y + 10,
+                tailBase.x + (gameState.playerState.facingRight ? -20 : 20),
+                tailBase.y + 5
+              )
+            }
+            
+            ctx.stroke()
+            
+            // 足（4本）
+            ctx.fillStyle = '#1a1a1a'
+            ctx.lineWidth = 3
+            
+            // 前足
+            ctx.beginPath()
+            ctx.ellipse(obj.x + 10, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.beginPath()
+            ctx.ellipse(obj.x + 18, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
+            ctx.fill()
+            
+            // 後ろ足
+            ctx.beginPath()
+            ctx.ellipse(obj.x + 25, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.beginPath()
+            ctx.ellipse(obj.x + 33, obj.y + obj.height - 3, 4, 6, 0, 0, Math.PI * 2)
             ctx.fill()
             break
             
@@ -209,16 +314,33 @@ export function Game2D() {
               'portal-contact': '#ffd43b',
             }
             
+            // ポータルが近くにある場合は光らせる
+            if (nearPortal === obj.id) {
+              // 光る効果
+              ctx.shadowBlur = 20
+              ctx.shadowColor = portalColors[obj.id] || '#fff'
+            }
+            
             ctx.fillStyle = portalColors[obj.id] || '#fff'
-            ctx.globalAlpha = 0.8
+            ctx.globalAlpha = nearPortal === obj.id ? 0.9 : 0.8
             ctx.beginPath()
             ctx.arc(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width / 2, 0, Math.PI * 2)
             ctx.fill()
+            
+            // 内側の輪（近くにいる時だけ）
+            if (nearPortal === obj.id) {
+              ctx.globalAlpha = 0.5
+              ctx.beginPath()
+              ctx.arc(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width / 3, 0, Math.PI * 2)
+              ctx.fill()
+            }
+            
+            ctx.shadowBlur = 0
             ctx.globalAlpha = 1
             
             // ラベル
             ctx.fillStyle = '#000'
-            ctx.font = '12px monospace'
+            ctx.font = nearPortal === obj.id ? 'bold 14px monospace' : '12px monospace'
             ctx.textAlign = 'center'
             const labels: { [key: string]: string } = {
               'portal-projects': 'Projects',
@@ -227,6 +349,13 @@ export function Game2D() {
               'portal-contact': 'Contact',
             }
             ctx.fillText(labels[obj.id] || '', obj.x + obj.width / 2, obj.y - 10)
+            
+            // Enterキーのヒント（近くにいる時だけ）
+            if (nearPortal === obj.id) {
+              ctx.font = '10px monospace'
+              ctx.fillStyle = '#333'
+              ctx.fillText('[Enter]', obj.x + obj.width / 2, obj.y + obj.height + 20)
+            }
             break
         }
       })
@@ -242,12 +371,14 @@ export function Game2D() {
     }
     
     render()
-  }, [canvasRef, gameState])
+  }, [canvasRef, gameState, nearPortal])
   
   // ポータルとの衝突検出
   useEffect(() => {
     const player = gameState.objects.find(obj => obj.type === 'player')
     if (!player) return
+    
+    let foundNearPortal: string | null = null
     
     gameState.objects.forEach(obj => {
       if (obj.type === 'portal') {
@@ -255,30 +386,50 @@ export function Game2D() {
           Math.pow(player.x - obj.x, 2) + Math.pow(player.y - obj.y, 2)
         )
         
-        if (distance < 50 && (keysPressed['enter'] || keysPressed[' '])) {
-          // ポータルに入る
-          const routes: { [key: string]: string } = {
-            'portal-projects': '/projects',
-            'portal-about': '/about',
-            'portal-blog': '/blog',
-            'portal-contact': '/contact',
-          }
+        // ポータルに近づいているかチェック（Enterキーが押されているかは別）
+        if (distance < 50) {
+          foundNearPortal = obj.id
           
-          if (routes[obj.id]) {
-            navigate({ to: routes[obj.id] })
+          // Enterキーが押された場合のみポータルに入る
+          if (keysPressed['enter']) {
+            const routes: { [key: string]: string } = {
+              'portal-projects': '/projects',
+              'portal-about': '/about',
+              'portal-blog': '/blog',
+              'portal-contact': '/contact',
+            }
+            
+            if (routes[obj.id]) {
+              navigate({ to: routes[obj.id] })
+            }
           }
         }
       }
     })
+    
+    setNearPortal(foundNearPortal)
   }, [gameState, keysPressed, navigate])
   
+  // ウィンドウサイズに応じてキャンバスサイズを更新
+  useEffect(() => {
+    const handleResize = () => {
+      if (canvasRef.current) {
+        canvasRef.current.width = window.innerWidth
+        canvasRef.current.height = window.innerHeight
+      }
+    }
+    
+    window.addEventListener('resize', handleResize)
+    handleResize()
+    
+    return () => window.removeEventListener('resize', handleResize)
+  }, [canvasRef])
+
   return (
-    <div ref={containerRef} className="relative w-full h-screen bg-sky-200 overflow-hidden">
+    <div ref={containerRef} className="fixed inset-0 overflow-hidden">
       <canvas
         ref={canvasRef}
-        width={800}
-        height={400}
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl"
+        className="absolute inset-0 w-full h-full"
         style={{ imageRendering: 'pixelated' }}
       />
       
