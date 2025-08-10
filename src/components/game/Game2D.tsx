@@ -158,100 +158,123 @@ export function Game2D() {
             const walkCycle = Date.now() * 0.01
             
             if (isMoving && !isJumping) {
-              // 歩行中は立って歩く姿勢
-              ctx.save()
-              ctx.translate(obj.x + obj.width / 2, obj.y + obj.height)
+              // 歩行中（4本足）
+              const walkOffset = Math.sin(walkCycle) * 2
               
-              // 体（立っている姿勢）
+              // 体（水平姿勢）
               ctx.fillStyle = '#1a1a1a'
               ctx.beginPath()
-              ctx.ellipse(0, -25, 15, 20, 0, 0, Math.PI * 2)
+              ctx.ellipse(
+                obj.x + obj.width / 2, 
+                obj.y + obj.height / 2 + 3, 
+                obj.width / 2 + 5, 
+                obj.height / 2 - 5,
+                0, 0, Math.PI * 2
+              )
               ctx.fill()
               
-              // 頭
+              // 頭（前方に配置）
               ctx.beginPath()
               ctx.arc(
-                gameState.playerState.facingRight ? 5 : -5,
-                -35,
+                obj.x + obj.width / 2 + (gameState.playerState.facingRight ? 15 : -15), 
+                obj.y + obj.height / 2,
                 10,
                 0, Math.PI * 2
               )
               ctx.fill()
               
-              // 耳
-              const earDir = gameState.playerState.facingRight ? 1 : -1
+              // 耳（三角形）
+              ctx.fillStyle = '#1a1a1a'
+              const earOffset = gameState.playerState.facingRight ? 15 : -15
+              
+              // 左耳
               ctx.beginPath()
-              ctx.moveTo(-6 * earDir, -40)
-              ctx.lineTo(-10 * earDir, -48)
-              ctx.lineTo(-2 * earDir, -43)
+              ctx.moveTo(obj.x + obj.width / 2 - 5 + earOffset, obj.y + obj.height / 2 - 5)
+              ctx.lineTo(obj.x + obj.width / 2 - 8 + earOffset, obj.y + obj.height / 2 - 15)
+              ctx.lineTo(obj.x + obj.width / 2 - 2 + earOffset, obj.y + obj.height / 2 - 8)
               ctx.closePath()
               ctx.fill()
               
+              // 右耳
               ctx.beginPath()
-              ctx.moveTo(6 * earDir, -40)
-              ctx.lineTo(10 * earDir, -48)
-              ctx.lineTo(2 * earDir, -43)
+              ctx.moveTo(obj.x + obj.width / 2 + 5 + earOffset, obj.y + obj.height / 2 - 5)
+              ctx.lineTo(obj.x + obj.width / 2 + 8 + earOffset, obj.y + obj.height / 2 - 15)
+              ctx.lineTo(obj.x + obj.width / 2 + 2 + earOffset, obj.y + obj.height / 2 - 8)
               ctx.closePath()
               ctx.fill()
               
-              // 目
+              // 目（緑色）
               ctx.fillStyle = '#00ff00'
               ctx.shadowBlur = 3
               ctx.shadowColor = '#00ff00'
-              const eyeX = gameState.playerState.facingRight ? 8 : -8
-              ctx.beginPath()
-              ctx.arc(eyeX, -35, 2, 0, Math.PI * 2)
-              ctx.fill()
-              ctx.beginPath()
-              ctx.arc(eyeX - 6 * earDir, -35, 2, 0, Math.PI * 2)
-              ctx.fill()
+              
+              if (gameState.playerState.facingRight) {
+                // 右向き
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 + 20, obj.y + obj.height / 2 - 2, 2, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 + 20, obj.y + obj.height / 2 + 2, 2, 0, Math.PI * 2)
+                ctx.fill()
+              } else {
+                // 左向き
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 - 20, obj.y + obj.height / 2 - 2, 2, 0, Math.PI * 2)
+                ctx.fill()
+                ctx.beginPath()
+                ctx.arc(obj.x + obj.width / 2 - 20, obj.y + obj.height / 2 + 2, 2, 0, Math.PI * 2)
+                ctx.fill()
+              }
+              
               ctx.shadowBlur = 0
               
-              // 前足（歩行アニメーション）
+              // 足（4本の歩行アニメーション）
+              ctx.fillStyle = '#1a1a1a'
+              
+              // 前足（左）- 位相0
+              const leftFrontY = obj.y + obj.height - 3 + Math.sin(walkCycle) * 3
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 12, leftFrontY, 3, 5 + Math.abs(Math.sin(walkCycle) * 2), 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // 前足（右）- 位相π
+              const rightFrontY = obj.y + obj.height - 3 + Math.sin(walkCycle + Math.PI) * 3
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 20, rightFrontY, 3, 5 + Math.abs(Math.sin(walkCycle + Math.PI) * 2), 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // 後ろ足（左）- 位相π/2
+              const leftBackY = obj.y + obj.height - 3 + Math.sin(walkCycle + Math.PI/2) * 3
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 25, leftBackY, 3, 5 + Math.abs(Math.sin(walkCycle + Math.PI/2) * 2), 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // 後ろ足（右）- 位相3π/2
+              const rightBackY = obj.y + obj.height - 3 + Math.sin(walkCycle + 3*Math.PI/2) * 3
+              ctx.beginPath()
+              ctx.ellipse(obj.x + 33, rightBackY, 3, 5 + Math.abs(Math.sin(walkCycle + 3*Math.PI/2) * 2), 0, 0, Math.PI * 2)
+              ctx.fill()
+              
+              // しっぽ（動きに合わせて波打つ）
               ctx.strokeStyle = '#1a1a1a'
-              ctx.lineWidth = 5
+              ctx.lineWidth = 6
               ctx.lineCap = 'round'
-              
-              // 左前足
               ctx.beginPath()
-              ctx.moveTo(-5, -15)
-              const leftFrontAngle = Math.sin(walkCycle) * 0.3
-              ctx.lineTo(-5 + Math.sin(leftFrontAngle) * 10, -5 + Math.cos(leftFrontAngle) * 10)
-              ctx.stroke()
               
-              // 右前足
-              ctx.beginPath()
-              ctx.moveTo(5, -15)
-              const rightFrontAngle = Math.sin(walkCycle + Math.PI) * 0.3
-              ctx.lineTo(5 + Math.sin(rightFrontAngle) * 10, -5 + Math.cos(rightFrontAngle) * 10)
-              ctx.stroke()
+              const tailBase = {
+                x: obj.x + (gameState.playerState.facingRight ? 5 : obj.width - 5),
+                y: obj.y + obj.height / 2
+              }
               
-              // 後ろ足
-              // 左後ろ足
-              ctx.beginPath()
-              ctx.moveTo(-5, -10)
-              const leftBackAngle = Math.sin(walkCycle + Math.PI) * 0.3
-              ctx.lineTo(-5 + Math.sin(leftBackAngle) * 10, Math.cos(leftBackAngle) * 10)
-              ctx.stroke()
-              
-              // 右後ろ足
-              ctx.beginPath()
-              ctx.moveTo(5, -10)
-              const rightBackAngle = Math.sin(walkCycle) * 0.3
-              ctx.lineTo(5 + Math.sin(rightBackAngle) * 10, Math.cos(rightBackAngle) * 10)
-              ctx.stroke()
-              
-              // しっぽ
-              ctx.beginPath()
-              ctx.moveTo(-10 * earDir, -20)
-              const tailWave = Math.sin(walkCycle * 0.5) * 10
+              const tailWave = Math.sin(walkCycle * 0.5) * 5
+              ctx.moveTo(tailBase.x, tailBase.y)
               ctx.quadraticCurveTo(
-                -20 * earDir, -25 + tailWave,
-                -30 * earDir, -30
+                tailBase.x + (gameState.playerState.facingRight ? -15 : 15),
+                tailBase.y - 10 + tailWave,
+                tailBase.x + (gameState.playerState.facingRight ? -25 : 25),
+                tailBase.y - 15
               )
               ctx.stroke()
-              
-              ctx.restore()
             } else {
               // 静止中またはジャンプ中（元のデザイン）
               // 体（楕円形）
